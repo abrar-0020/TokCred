@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
+import { computeCredentialDataHash } from '../utils/pdfVerifier';
 
 // Master HTML template for the professional certificate (A4 Landscape, 297mm x 210mm)
 const CERTIFICATE_HTML_TEMPLATE = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>TokCred Degree Certificate (Professional)</title>
@@ -234,6 +235,218 @@ export async function downloadCertificatePdf(credential, metadata) {
 
     pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
     pdf.save(filename);
+  } finally {
+    if (iframe.parentNode) {
+      iframe.parentNode.removeChild(iframe);
+    }
+  }
+}
+
+/**
+ * Generates and downloads the official TokCred Signed Certificate PDF
+ * Embedding: credential ID + SHA-256 hash of the credential + issuer signature
+ * into both the QR code and the PDF file.
+ */
+export async function downloadSignedCertificatePdf(credential, metadata) {
+  if (metadata?.isEncrypted && !metadata?.studentName) {
+    throw new Error('Unlock this encrypted credential with an authorized wallet before generating the signed certificate PDF.');
+  }
+
+  const tokenId = credential?.tokenId !== undefined ? String(credential.tokenId).trim() : 'N/A';
+  const credentialId =
+    metadata?.credentialId ||
+    metadata?.id ||
+    (tokenId !== 'N/A' ? `TC-TOKEN-${tokenId}` : 'N/A');
+
+  const studentName = metadata?.studentName?.trim() || 'Candidate Name';
+  const degree = metadata?.degree?.trim() || 'Academic Credential';
+  const enrollmentNumber =
+    metadata?.enrollmentNumber?.trim() ||
+    metadata?.registrationNumber?.trim() ||
+    'Not Recorded';
+  const institution = metadata?.institution?.trim() || 'Presidency University';
+  const grade = metadata?.grade?.trim() || 'Honors';
+
+  let issueDate = metadata?.issueDate?.trim() || '';
+  if (!issueDate && credential?.issueTimestamp) {
+    try {
+      const ts = Number(credential.issueTimestamp);
+      const d = ts > 1e11 ? new Date(ts) : new Date(ts * 1000);
+      issueDate = d.toISOString().split('T')[0];
+    } catch {
+      issueDate = '2026-09-23';
+    }
+  }
+  if (!issueDate) issueDate = '2026-09-23';
+
+  // 1. Calculate the real SHA-256 hash of the issued credential data
+  const canonicalData = {
+    credentialId,
+    degree,
+    enrollmentNumber,
+    grade,
+    issueDate,
+    issuerName: institution,
+    studentName,
+  };
+  const credentialHash = computeCredentialDataHash(canonicalData);
+
+  // 2. Obtain issuer signature
+  let issuerSignature = '';
+  try {
+    const resp = await fetch('/api/credential-crypto?action=sign-credential', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credentialData: canonicalData }),
+    });
+    const result = await resp.json();
+    if (result.success && result.signature) {
+      issuerSignature = result.signature;
+    }
+  } catch (err) {
+    console.warn('Signature API request failed:', err);
+  }
+
+  // 3. Prepare embedded payload (QR code and PDF embed the exact same data)
+  const embeddedPayload = {
+    tokcred: 'v1',
+    credentialId,
+    studentName,
+    degree,
+    enrollmentNumber,
+    issuerName: institution,
+    issueDate,
+    grade,
+    tokenId,
+    hash: credentialHash,
+    signature: issuerSignature,
+  };
+  const embeddedPayloadString = JSON.stringify(embeddedPayload);
+
+  // 4. Generate QR code with embedded payload
+  const qrSvg = await generateQrSvgString(embeddedPayloadString);
+
+  // 5. Build certificate HTML with this QR
+  const monogram = metadata?.monogram?.trim() || deriveMonogram(institution);
+  const rawProgram = metadata?.branch?.trim() || metadata?.fieldOfStudy?.trim() || metadata?.program?.trim() || '';
+  const showProgram = Boolean(
+    rawProgram &&
+    rawProgram.toLowerCase() !== degree.toLowerCase() &&
+    !degree.toLowerCase().includes(rawProgram.toLowerCase())
+  );
+  const programBlock = showProgram ? `<div class="pr">in ${escapeHtml(rawProgram)}</div>` : '';
+
+  const holderWalletRaw =
+    metadata?.holderWallet ||
+    credential?.holderWallet ||
+    credential?.student ||
+    '';
+  const holderWallet = holderWalletRaw
+    ? `${holderWalletRaw.slice(0, 8)}...${holderWalletRaw.slice(-6)}`
+    : 'Not Bound';
+
+  const replacements = {
+    '{{monogram}}': escapeHtml(monogram),
+    '{{institution}}': escapeHtml(institution),
+    '{{studentName}}': escapeHtml(studentName),
+    '{{enrollmentNumber}}': escapeHtml(enrollmentNumber),
+    '{{holderWallet}}': escapeHtml(holderWallet),
+    '{{degree}}': escapeHtml(degree),
+    '{{grade}}': escapeHtml(grade),
+    '{{issueYear}}': escapeHtml(issueDate.split('-')[0] || String(new Date().getFullYear())),
+    '{{credentialId}}': escapeHtml(credentialId),
+    '{{tokenId}}': escapeHtml(tokenId),
+  };
+
+  let htmlContent = CERTIFICATE_HTML_TEMPLATE;
+  for (const [key, value] of Object.entries(replacements)) {
+    htmlContent = htmlContent.split(key).join(value);
+  }
+  htmlContent = htmlContent.split('{{programBlock}}').join(programBlock);
+  htmlContent = htmlContent.split('{{qrSvg}}').join(qrSvg);
+
+  const safeId = credentialId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `TokCred-Certificate-${safeId}.pdf`;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.left = '-99999px';
+  iframe.style.top = '0';
+  iframe.style.width = '1123px';
+  iframe.style.height = '794px';
+  iframe.style.border = 'none';
+  iframe.style.margin = '0';
+  iframe.style.padding = '0';
+  iframe.style.zIndex = '-99999';
+  document.body.appendChild(iframe);
+
+  try {
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    if (iframe.contentWindow.document.fonts) {
+      await iframe.contentWindow.document.fonts.ready;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    const targetElement = iframe.contentWindow.document.querySelector('.pg') || iframe.contentWindow.document.body;
+
+    const canvas = await html2canvas(targetElement, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#FFFEFC',
+      width: 1123,
+      height: 794,
+      windowWidth: 1123,
+      windowHeight: 794,
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0,
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+      compress: true,
+    });
+
+    // Embed data in PDF document properties
+    pdf.setProperties({
+      title: 'TokCred Signed Degree Certificate',
+      subject: embeddedPayloadString,
+      keywords: 'tokcred,signed-pdf',
+      author: institution,
+    });
+
+    pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+
+    // Append uncompressed binary marker block
+    const buffer = pdf.output('arraybuffer');
+    const uint8 = new Uint8Array(buffer);
+    const marker = `\n%TOKCRED_CREDENTIAL_DATA_BEGIN%\n${embeddedPayloadString}\n%TOKCRED_CREDENTIAL_DATA_END%\n`;
+    const markerBytes = new TextEncoder().encode(marker);
+
+    const combined = new Uint8Array(uint8.length + markerBytes.length);
+    combined.set(uint8, 0);
+    combined.set(markerBytes, uint8.length);
+
+    const blob = new Blob([combined], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   } finally {
     if (iframe.parentNode) {
       iframe.parentNode.removeChild(iframe);

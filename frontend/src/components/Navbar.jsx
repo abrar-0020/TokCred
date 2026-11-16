@@ -5,7 +5,7 @@ import WalletConnectButton from './WalletConnectButton';
 
 const Navbar = () => {
   const location = useLocation();
-  const hideOn = ['/', '/dashboard', '/issue', '/features', '/public-verify', '/developers', '/support', '/history', '/institutions', '/for-institutions'];
+  const hideOn = ['/', '/dashboard', '/issue', '/features', '/public-verify', '/developers', '/history', '/institutions', '/for-institutions'];
   const currentPath = location.pathname.endsWith('/') && location.pathname !== '/' ? location.pathname.slice(0, -1) : location.pathname;
 
   if (hideOn.includes(currentPath)) {
@@ -48,9 +48,6 @@ const Navbar = () => {
             </a>
             <a href="/developers" className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all">
               Developers
-            </a>
-            <a href="/support" className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all">
-              Support
             </a>
             {Boolean(account && (isAdmin || isIssuer)) && (
               <>
@@ -122,7 +119,6 @@ const Navbar = () => {
             <a href="/" className="text-xs font-medium text-slate-600 hover:text-primary-600 whitespace-nowrap">Home</a>
             <a href="/features" className="text-xs font-medium text-slate-600 hover:text-primary-600 whitespace-nowrap">Features</a>
             <a href="/developers" className="text-xs font-medium text-slate-600 hover:text-primary-600 whitespace-nowrap">Developers</a>
-            <a href="/support" className="text-xs font-medium text-slate-600 hover:text-primary-600 whitespace-nowrap">Support</a>
             {Boolean(account && (isAdmin || isIssuer)) && (
               <>
                 <a href="/dashboard" className="text-xs font-medium text-slate-600 hover:text-primary-600 whitespace-nowrap">Dashboard</a>

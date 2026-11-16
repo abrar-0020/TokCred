@@ -44,7 +44,6 @@ const PremiumPageLayout = ({ title, subtitle, badge, children }) => {
             <span className="cursor-pointer hover:text-white transition-colors" onClick={() => navigate('/')}>Home</span>
             <span className="cursor-pointer hover:text-white transition-colors" onClick={() => navigate('/features')}>Features</span>
             <span className="cursor-pointer hover:text-white transition-colors" onClick={() => navigate('/developers')}>Developers</span>
-            <span className="cursor-pointer hover:text-white transition-colors" onClick={() => navigate('/support')}>Support</span>
 
             {Boolean(account && (isAdmin || isIssuer)) && (
               <>

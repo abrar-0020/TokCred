@@ -68,6 +68,7 @@ brag-output/composition/renders/*.mp4
 
 # Agents & Tooling local metadata
 .agents/
+.ua/
 skills-lock.json
 .claude/
 **/.claude/

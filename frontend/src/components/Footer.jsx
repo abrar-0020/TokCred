@@ -185,7 +185,6 @@ const Footer = () => {
                 <Link to="/features" className="text-[#34285a] text-[14px] font-semibold hover:opacity-70 transition-opacity">Features</Link>
                 <Link to="/public-verify" className="text-[#34285a] text-[14px] font-semibold hover:opacity-70 transition-opacity">Public Verify</Link>
                 <Link to="/institutions" className="text-[#34285a] text-[14px] font-semibold hover:opacity-70 transition-opacity">For Institutions</Link>
-                <Link to="/support" className="text-[#34285a] text-[14px] font-semibold hover:opacity-70 transition-opacity">Support</Link>
               </div>
               <div className="flex flex-col gap-3.5">
                 <h4 className="text-[#9B93B4] text-[14px] font-semibold mb-1">Resources</h4>
@@ -231,20 +230,25 @@ const Footer = () => {
     );
   }
 
-  // Elegant Minimal Silver Footer for all other pages (matching Image 2)
+  const isDarkPage = ['/developers', '/dashboard', '/student-dashboard', '/issue'].includes(location.pathname);
+
+  // Elegant Minimal Footer for all other pages (dark-mode aware)
   return (
-    <footer className="w-full py-8 border-t border-white/40 flex flex-col sm:flex-row items-center justify-between px-8 max-w-[1312px] mx-auto text-[#756F80] text-[12px] gap-4 relative z-10 font-['Inter']">
+    <footer className={`w-full py-8 border-t flex flex-col sm:flex-row items-center justify-between px-8 max-w-[1312px] mx-auto text-[12px] gap-4 relative z-10 font-['Inter'] ${
+      isDarkPage 
+        ? 'border-white/10 text-white/50' 
+        : 'border-black/10 text-[#756F80]'
+    }`}>
       <div>© {new Date().getFullYear()} TokCred Protocol. All rights reserved.</div>
       <div className="flex flex-wrap justify-center items-center gap-6">
-        <Link to="/" className="hover:text-[#292333] transition-colors">Home</Link>
-        <Link to="/features" className="hover:text-[#292333] transition-colors">Features</Link>
-        <Link to="/institutions" className="hover:text-[#292333] transition-colors">For Institutions</Link>
-        <Link to="/public-verify" className="hover:text-[#292333] transition-colors">Public Verify</Link>
-        <Link to="/developers" className="hover:text-[#292333] transition-colors">Docs</Link>
-        <Link to="/support" className="hover:text-[#292333] transition-colors">Support</Link>
-        <Link to="/privacy" className="hover:text-[#292333] transition-colors">Privacy</Link>
-        <Link to="/terms" className="hover:text-[#292333] transition-colors">Terms</Link>
-        <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#292333] transition-colors">GitHub</a>
+        <Link to="/" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>Home</Link>
+        <Link to="/features" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>Features</Link>
+        <Link to="/institutions" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>For Institutions</Link>
+        <Link to="/public-verify" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>Public Verify</Link>
+        <Link to="/developers" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>Docs</Link>
+        <Link to="/privacy" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>Privacy</Link>
+        <Link to="/terms" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>Terms</Link>
+        <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className={`transition-colors ${isDarkPage ? 'hover:text-white' : 'hover:text-[#292333]'}`}>GitHub</a>
       </div>
     </footer>
   );

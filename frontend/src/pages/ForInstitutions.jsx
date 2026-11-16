@@ -337,14 +337,6 @@ const ForInstitutions = ({ requestedPath = null }) => {
                   <span>Developer Integration Guide</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/support')}
-                  className="text-[#7053AD] hover:underline flex items-center gap-1"
-                >
-                  <span>Institution FAQ &amp; Support</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </button>
               </div>
             </div>
           </div>

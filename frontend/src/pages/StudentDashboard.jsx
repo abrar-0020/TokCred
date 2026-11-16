@@ -29,7 +29,7 @@ import {
 import { loadStudentCredentials, decryptCredentialsBatch } from '../logic';
 import { formatDate } from '../utils/helpers';
 import { CONTRACT_ADDRESS, NETWORKS } from '../config/contract';
-import { downloadCertificatePdf } from '../services/certificateGenerator';
+import { downloadCertificatePdf, downloadSignedCertificatePdf } from '../services/certificateGenerator';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -164,7 +164,7 @@ const StudentDashboard = () => {
     if (!activeCred || activeCred.revoked || activeIsLocked || activeIsUnavailable) return;
     try {
       setDownloadingPdf(true);
-      await downloadCertificatePdf(activeCred, meta);
+      await downloadSignedCertificatePdf(activeCred, meta);
     } catch (err) {
       console.error('Failed to generate PDF:', err);
       setDecryptionError(err?.message || 'Unable to generate PDF for this credential.');
@@ -456,11 +456,11 @@ const StudentDashboard = () => {
                     type="button"
                     onClick={handleDownloadPdf}
                     disabled={activeCred.revoked || activeIsLocked || activeIsUnavailable || downloadingPdf}
-                    title={activeIsLocked ? 'Unlock encrypted credential first to export PDF' : 'Download A4 PDF Certificate'}
-                    className="h-[46px] px-3.5 rounded-[12px] bg-white/55 hover:bg-white/80 disabled:opacity-45 disabled:cursor-not-allowed border border-white/80 text-[#292333] text-[12px] font-['Inter'] font-medium flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    title={activeIsLocked ? 'Unlock encrypted credential first to export PDF' : 'Download signed PDF'}
+                    className="h-[46px] px-3.5 rounded-[12px] bg-white/55 hover:bg-white/80 disabled:opacity-45 disabled:cursor-not-allowed border border-white/80 text-[#292333] text-[12px] font-['Inter'] font-medium flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer whitespace-nowrap"
                   >
                     <Download className="w-3.5 h-3.5 text-[#513582]" />
-                    <span>{downloadingPdf ? 'PDF...' : 'PDF'}</span>
+                    <span>{downloadingPdf ? 'Generating...' : 'Download signed PDF'}</span>
                   </button>
                 </>
               )}

@@ -14,45 +14,21 @@ import IssueCredential from './pages/IssueCredential';
 import Dashboard from './pages/Dashboard';
 import VerifyCredential from './pages/VerifyCredential';
 import PublicVerify from './pages/PublicVerify';
+import VerifyUpload from './pages/VerifyUpload';
 import History from './pages/History';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import Features from './pages/Features';
 import Developers from './pages/Developers';
-import Support from './pages/Support';
 import StudentDashboard from './pages/StudentDashboard';
 import ForInstitutions from './pages/ForInstitutions';
-
-const IntroLoader = ({ onComplete }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
-
-  return (
-    <div className="fixed inset-0 z-[9999] bg-[#0f172a] flex items-center justify-center overflow-hidden">
-      <video 
-        className="absolute w-full h-full object-cover"
-        autoPlay 
-        muted 
-        playsInline 
-        onEnded={onComplete}
-        onError={onComplete}
-      >
-        <source src="/loading-animation.mp4" type="video/mp4" />
-      </video>
-    </div>
-  );
-};
 
 const obsidianRoutes = ['/', '/dashboard', '/student-dashboard', '/issue', '/verify', '/public-verify', '/history', '/privacy', '/terms', '/features', '/institutions', '/for-institutions'];
 
 const AppLayout = () => {
   const location = useLocation();
   const currentPath = location.pathname.endsWith('/') && location.pathname !== '/' ? location.pathname.slice(0, -1) : location.pathname;
-  const isCustomNavRoute = ['/', '/dashboard', '/student-dashboard', '/issue', '/features', '/public-verify', '/developers', '/support', '/history', '/privacy', '/terms', '/institutions', '/for-institutions'].includes(currentPath);
+  const isCustomNavRoute = ['/', '/dashboard', '/student-dashboard', '/issue', '/features', '/public-verify', '/verify/upload', '/developers', '/history', '/privacy', '/terms', '/institutions', '/for-institutions'].includes(currentPath);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -83,6 +59,7 @@ const AppLayout = () => {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/verify" element={<VerifyCredential />} />
           <Route path="/public-verify" element={<PublicVerify />} />
+          <Route path="/verify/upload" element={<VerifyUpload />} />
           <Route
             path="/history"
             element={
@@ -97,7 +74,6 @@ const AppLayout = () => {
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/features" element={<Features />} />
           <Route path="/developers" element={<Developers />} />
-          <Route path="/support" element={<Support />} />
         </Routes>
       </main>
       <Footer />
@@ -108,11 +84,6 @@ const AppLayout = () => {
 };
 
 function App() {
-  const [showIntro, setShowIntro] = useState(() => {
-    if (typeof window !== 'undefined' && window.location.pathname !== '/') return false;
-    return !sessionStorage.getItem('introPlayed');
-  });
-
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -134,22 +105,13 @@ function App() {
     };
   }, []);
 
-  const handleIntroComplete = () => {
-    sessionStorage.setItem('introPlayed', 'true');
-    setShowIntro(false);
-  };
-
   return (
     <ThemeProvider>
-    <Web3Provider>
-      {showIntro ? (
-        <IntroLoader onComplete={handleIntroComplete} />
-      ) : (
+      <Web3Provider>
         <Router>
           <AppLayout />
         </Router>
-      )}
-    </Web3Provider>
+      </Web3Provider>
     </ThemeProvider>
   );
 }

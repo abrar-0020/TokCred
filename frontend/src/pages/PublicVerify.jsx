@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Wallet,
   Unlock,
-  KeyRound
+  KeyRound,
+  FileText
 } from 'lucide-react';
 import { formatDate } from '../utils/helpers';
 import {
@@ -689,6 +690,16 @@ const PublicVerify = () => {
                     </span>
                     {!loading && <Icons.ArrowRight />}
                   </button>
+                  <div className="pt-2 text-center w-full">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/verify/upload')}
+                      className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#7053AD] hover:text-[#513582] hover:underline transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>Verify signed PDF document instead →</span>
+                    </button>
+                  </div>
                 </form>
 
                 <p className="font-['Inter'] text-[12px] sm:text-[13px] text-[#756F80] mt-2 sm:mt-4 pt-3 sm:pt-4 border-t border-[#E4DFE9]/50 w-full max-w-[438px]">

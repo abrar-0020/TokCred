@@ -43,10 +43,6 @@ export default {
         '15': '395px',
       },
       borderRadius: {
-        'sm': '24px',
-        'md': '32px',
-        'xl': '96px',
-        'full': '100px',
         'circle': '50%',
       },
       fontSize: {

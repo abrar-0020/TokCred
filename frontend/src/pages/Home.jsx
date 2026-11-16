@@ -222,7 +222,6 @@ const Home = () => {
             <span className="cursor-pointer hover:opacity-70 transition-opacity select-none font-semibold" onClick={() => navigate('/')}>Home</span>
             <span className="cursor-pointer hover:opacity-70 transition-opacity select-none" onClick={() => navigate('/features')}>Features</span>
             <span className="cursor-pointer hover:opacity-70 transition-opacity select-none" onClick={() => navigate('/developers')}>Developers</span>
-            <span className="cursor-pointer hover:opacity-70 transition-opacity select-none" onClick={() => navigate('/support')}>Support</span>
 
             {Boolean(account && (isAdmin || isIssuer)) && (
               <span className="cursor-pointer hover:opacity-70 transition-opacity select-none font-semibold text-[#7053AD]" onClick={() => navigate('/dashboard')}>Admin</span>
@@ -286,12 +285,6 @@ const Home = () => {
                 className="text-left px-4 py-3 rounded-2xl hover:bg-white/10 text-[15px] text-white/80"
               >
                 Developers
-              </button>
-              <button 
-                onClick={() => { navigate('/support'); setMobileMenuOpen(false); }} 
-                className="text-left px-4 py-3 rounded-2xl hover:bg-white/10 text-[15px] text-white/80"
-              >
-                Support
               </button>
               <button 
                 onClick={() => { navigate('/public-verify'); setMobileMenuOpen(false); }} 

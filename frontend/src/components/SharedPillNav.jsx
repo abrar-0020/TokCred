@@ -39,7 +39,6 @@ const SharedPillNav = ({ variant = 'dark' }) => {
           <span className={`cursor-pointer transition-colors ${location.pathname === '/' ? (isLight ? 'text-black font-semibold' : 'text-white font-semibold') : (isLight ? 'hover:text-black' : 'hover:text-white')}`} onClick={() => navigate('/')}>Home</span>
           <span className={`cursor-pointer transition-colors ${location.pathname === '/features' ? (isLight ? 'text-black font-semibold' : 'text-white font-semibold') : (isLight ? 'hover:text-black' : 'hover:text-white')}`} onClick={() => navigate('/features')}>Features</span>
           <span className={`cursor-pointer transition-colors ${location.pathname === '/developers' ? (isLight ? 'text-black font-semibold' : 'text-white font-semibold') : (isLight ? 'hover:text-black' : 'hover:text-white')}`} onClick={() => navigate('/developers')}>Developers</span>
-          <span className={`cursor-pointer transition-colors ${location.pathname === '/support' ? (isLight ? 'text-black font-semibold' : 'text-white font-semibold') : (isLight ? 'hover:text-black' : 'hover:text-white')}`} onClick={() => navigate('/support')}>Support</span>
 
           {Boolean(account && (isAdmin || isIssuer)) && (
             <span className={`cursor-pointer transition-colors font-semibold ${isLight ? 'text-[#7053AD] hover:opacity-80' : 'text-[#AB9FF2] hover:opacity-80'}`} onClick={() => navigate('/dashboard')}>Admin</span>

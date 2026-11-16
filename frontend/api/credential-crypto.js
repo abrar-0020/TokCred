@@ -43,6 +43,20 @@ function cleanupExpiredNonces() {
   }
 }
 
+export function computeCredentialDataHash(data) {
+  const normalized = {
+    credentialId: String(data?.credentialId || '').trim(),
+    degree: String(data?.degree || '').trim(),
+    enrollmentNumber: String(data?.enrollmentNumber || data?.registrationNumber || '').trim(),
+    grade: String(data?.grade || '').trim(),
+    issueDate: String(data?.issueDate || '').trim(),
+    issuerName: String(data?.issuerName || data?.institution || '').trim(),
+    studentName: String(data?.studentName || '').trim(),
+  };
+  const canonicalString = JSON.stringify(normalized, Object.keys(normalized).sort());
+  return ethers.sha256(ethers.toUtf8Bytes(canonicalString));
+}
+
 export function canonicalizeObject(obj) {
   if (obj === null || typeof obj !== 'object') {
     return JSON.stringify(obj);
@@ -330,6 +344,7 @@ export async function verifyWalletAuthorization({
   const isDeclaredStudent = Boolean(normalizedStudent && normalizedRecovered === normalizedStudent);
 
   if (isDeclaredStudent) {
+    // If tokenId is supplied and RPC responds, confirm Soulbound owner matches
     if (tokenId !== undefined && tokenId !== null && tokenId !== '') {
       const chainState = await checker({ signerAddress: recoveredAddress, tokenId, rpcUrl, contractAddress });
       if (chainState.checked && chainState.owner && chainState.owner.toLowerCase() !== normalizedStudent) {
@@ -343,6 +358,7 @@ export async function verifyWalletAuthorization({
     return { authorized: true, recoveredAddress, role: 'holder' };
   }
 
+  // Otherwise check whether signer holds ISSUER_ROLE or DEFAULT_ADMIN_ROLE on-chain
   const chainState = await checker({ signerAddress: recoveredAddress, tokenId, rpcUrl, contractAddress });
   if (chainState.checked && chainState.isIssuerOrAdmin) {
     usedNonces.set(nonce, Date.now());
@@ -493,6 +509,41 @@ export default async function handler(req, res) {
         success: true,
         authorizedSigner: recoveredAddress,
         decryptedItems,
+      });
+    }
+
+    if (action === 'sign-credential') {
+      const { credentialData } = body;
+      if (!credentialData) {
+        return res.status(400).json({ error: 'Missing credentialData' });
+      }
+
+      const normalizedData = {
+        credentialId: String(credentialData.credentialId || '').trim(),
+        degree: String(credentialData.degree || '').trim(),
+        enrollmentNumber: String(credentialData.enrollmentNumber || credentialData.registrationNumber || '').trim(),
+        grade: String(credentialData.grade || '').trim(),
+        issueDate: String(credentialData.issueDate || '').trim(),
+        issuerName: String(credentialData.issuerName || credentialData.institution || '').trim(),
+        studentName: String(credentialData.studentName || '').trim(),
+      };
+
+      const credentialHash = computeCredentialDataHash(normalizedData);
+
+      const privateKey = process.env.PRIVATE_KEY;
+      if (!privateKey) {
+        return res.status(500).json({ error: 'Issuer private key not configured on server' });
+      }
+
+      const issuerWallet = new ethers.Wallet(privateKey);
+      const signature = await issuerWallet.signMessage(credentialHash);
+
+      return res.status(200).json({
+        success: true,
+        credentialHash,
+        signature,
+        issuerAddress: issuerWallet.address,
+        normalizedData
       });
     }
 
